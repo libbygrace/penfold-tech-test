@@ -103,17 +103,23 @@ const determineBlackJack = (hand: Hand): boolean => hand.length === 2;
 
 const determineGameResult = (state: GameState): GameResult => {
   const dealerHandTotal = calculateHandScore(state.dealerHand);
-
   const playerHandTotal = calculateHandScore(state.playerHand);
 
-  if (playerHandTotal > 21) {
+  if (dealerHandTotal > 21 && playerHandTotal > 21) {
+    //If both hands bust
+    return 'no_result';
+  } else if (
+    playerHandTotal > 21 ||
+    (dealerHandTotal > playerHandTotal && dealerHandTotal <= 21)
+  ) {
+    //If player hand bust or dealer hand valid score but higher than player
     return 'dealer_win';
-  } else if (dealerHandTotal > 21) {
+  } else if (
+    dealerHandTotal > 21 ||
+    (playerHandTotal > dealerHandTotal && playerHandTotal <= 21)
+  ) {
+    //If dealer hand bust or player hand valid score but higher than dealer
     return 'player_win';
-  } else if (playerHandTotal > dealerHandTotal) {
-    return 'player_win';
-  } else if (dealerHandTotal > playerHandTotal) {
-    return 'dealer_win';
   } else if (playerHandTotal === dealerHandTotal) {
     if (playerHandTotal === 21) {
       //Determine if blackjack
@@ -122,21 +128,20 @@ const determineGameResult = (state: GameState): GameResult => {
       const dealerHand = determineBlackJack(state.dealerHand);
 
       if (playerHand && dealerHand) {
+        // If both player hand and dealer hand equals blackjack
         return 'draw';
       } else if (playerHand && !dealerHand) {
+        // If player has blackjack but the dealer doesn't
         return 'player_win';
       } else if (!playerHand && dealerHand) {
+        // If dealer has blackjack but the player doesn't
         return 'dealer_win';
       }
     } else {
+      //If both score the same
       return 'draw';
     }
   }
-
-  console.log('DEALER HAND', dealerHandTotal);
-
-  console.log('PLAYER HAND', playerHandTotal);
-
   return 'no_result';
 };
 
@@ -172,8 +177,6 @@ const playerHits = (state: GameState): GameState => {
 //UI Component
 const Game = (): JSX.Element => {
   const [state, setState] = useState(setupGame());
-
-  console.log('STATE', state);
 
   return (
     <>

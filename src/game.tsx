@@ -8,7 +8,6 @@ import {
   Hand,
   GameResult,
 } from './types';
-import { log } from 'console';
 
 //UI Elements
 const CardBackImage = () => (
@@ -99,7 +98,8 @@ const calculateHandScore = (hand: Hand): number => {
   return total;
 };
 
-const determineBlackJack = (hand: Hand): boolean => hand.length === 2;
+const determineBlackJack = (hand: Hand, total: number): boolean =>
+  hand.length === 2 && total === 21;
 
 const determineGameResult = (state: GameState): GameResult => {
   const dealerHandTotal = calculateHandScore(state.dealerHand);
@@ -108,40 +108,53 @@ const determineGameResult = (state: GameState): GameResult => {
   if (dealerHandTotal > 21 && playerHandTotal > 21) {
     //If both hands bust
     return 'no_result';
-  } else if (
+  }
+
+  if (
     playerHandTotal > 21 ||
     (dealerHandTotal > playerHandTotal && dealerHandTotal <= 21)
   ) {
     //If player hand bust or dealer hand valid score but higher than player
     return 'dealer_win';
-  } else if (
+  }
+
+  if (
     dealerHandTotal > 21 ||
     (playerHandTotal > dealerHandTotal && playerHandTotal <= 21)
   ) {
     //If dealer hand bust or player hand valid score but higher than dealer
     return 'player_win';
-  } else if (playerHandTotal === dealerHandTotal) {
-    if (playerHandTotal === 21) {
-      //Determine if blackjack
-      const playerHand = determineBlackJack(state.playerHand);
+  }
 
-      const dealerHand = determineBlackJack(state.dealerHand);
+  if (playerHandTotal === dealerHandTotal) {
+    //If players score the same look into if any of them won with blackjack
 
-      if (playerHand && dealerHand) {
-        // If both player hand and dealer hand equals blackjack
+    const isPlayerHandBlackjack = determineBlackJack(
+      state.playerHand,
+      playerHandTotal
+    );
+
+    const isDealerHandBlackjack = determineBlackJack(
+      state.dealerHand,
+      dealerHandTotal
+    );
+
+    switch (true) {
+      case isPlayerHandBlackjack && isDealerHandBlackjack:
+        // If both hands Blackjack players draw
         return 'draw';
-      } else if (playerHand && !dealerHand) {
-        // If player has blackjack but the dealer doesn't
+      case isPlayerHandBlackjack && !isDealerHandBlackjack:
+        // If player hand Blackjack player wins
         return 'player_win';
-      } else if (!playerHand && dealerHand) {
-        // If dealer has blackjack but the player doesn't
+      case !isPlayerHandBlackjack && isDealerHandBlackjack:
+        // If dealer hand Blackjack dealer wins
         return 'dealer_win';
-      }
-    } else {
-      //If both score the same
-      return 'draw';
+      default:
+        // Both hands scored the same
+        return 'draw';
     }
   }
+
   return 'no_result';
 };
 
